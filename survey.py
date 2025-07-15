@@ -56,7 +56,7 @@ if st.session_state.index < len(images):
     st.title(f"Image {st.session_state.index + 1} of {len(images)}")
 
     image_name, image_path = images[st.session_state.index]
-    st.image(Image.open(image_path), caption=image_name, use_column_width=True)
+    st.image(Image.open(image_path), caption=image_name, use_container_width=True)
 
     with st.form(f"form_{st.session_state.index}"):
         naturalness = st.selectbox("How natural does the texture appear to you?", ['Unnatural', 'Neutral', 'Natural'])
