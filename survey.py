@@ -5,15 +5,14 @@ import random
 import re
 from PIL import Image
 
-# Set page config
+# App settings
 st.set_page_config(page_title="Wood Texture Survey", layout="wide")
 
-# Load images
+# Load and shuffle images
 @st.cache
 def load_images(image_dir):
     images = []
     valid_extensions = ('.png', '.jpg', '.jpeg')
-
     for root, _, files in os.walk(image_dir):
         for file in files:
             if file.lower().endswith(valid_extensions):
@@ -22,46 +21,51 @@ def load_images(image_dir):
     random.shuffle(images)
     return images
 
-# Image directory (change to your folder)
-IMAGE_DIR = "Images"  # <-- update if needed
+IMAGE_DIR = "Images"  # Make sure this folder is in your GitHub repo
 images = load_images(IMAGE_DIR)
 
-# Session state for image index
+# Session state setup
 if "index" not in st.session_state:
     st.session_state.index = 0
 if "responses" not in st.session_state:
     st.session_state.responses = []
 
-# Demographics form (shown once)
-if st.session_state.index == 0:
+# Demographics form (first-time only)
+if "demographics_collected" not in st.session_state:
     st.title("Demographic Information")
-    with st.form("demographics"):
+    with st.form("demographics_form"):
         age = st.text_input("Age")
         gender = st.selectbox("Gender", ["Male", "Female", "Other"])
         experience = st.selectbox("Wood Experience", ["None", "Basic", "Average", "High", "Expert"])
         submitted = st.form_submit_button("Start Survey")
+
         if submitted:
             st.session_state.demographics = {
                 "Age": age,
                 "Gender": gender,
                 "Wood Experience": experience
             }
-            st.session_state.index += 1
+            st.session_state.demographics_collected = True
+            st.session_state.index = 0  # Start at first image
+            st.experimental_rerun()
     st.stop()
 
-# Show image and form
-if st.session_state.index <= len(images):
-    st.title("Image Evaluation")
+# Main survey loop
+if st.session_state.index < len(images):
+    st.title(f"Image {st.session_state.index + 1} of {len(images)}")
 
-    image_name, image_path = images[st.session_state.index - 1]
+    image_name, image_path = images[st.session_state.index]
     st.image(Image.open(image_path), caption=image_name, use_column_width=True)
 
     with st.form(f"form_{st.session_state.index}"):
         naturalness = st.selectbox("How natural does the texture appear to you?", ['Unnatural', 'Neutral', 'Natural'])
-        aesthetic = st.slider("How much do you like the appearance? (0-6)", 0, 6, 3)
+        aesthetic = st.slider("How much do you like the appearance? (0–6)", 0, 6, 3)
         sorting = st.selectbox("How would you rate the sorting of the texture?", [
-            'Minimal Color Variation', 'Slight Color Variation', 'Moderate Color Variation',
-            'Very Lively Color Variation', 'Highly Lively Color Variation'
+            'Minimal Color Variation',
+            'Slight Color Variation',
+            'Moderate Color Variation',
+            'Very Lively Color Variation',
+            'Highly Lively Color Variation'
         ])
         submitted = st.form_submit_button("Next")
 
@@ -74,6 +78,7 @@ if st.session_state.index <= len(images):
             else:
                 scale = distortion = roughness = knot = contrast = brightness = wood_type = None
 
+            # Store response
             response = {
                 **st.session_state.demographics,
                 "Image": image_name,
@@ -93,11 +98,13 @@ if st.session_state.index <= len(images):
             st.session_state.index += 1
             st.experimental_rerun()
 
-# End of survey
+# End screen
 else:
-    st.success("Thank you! Your responses have been recorded.")
-
+    st.success("✅ Thank you! Your responses have been recorded.")
     df = pd.DataFrame(st.session_state.responses)
-    df.to_csv("experiment_results.csv", index=False)
-    st.download_button("Download Results", df.to_csv(index=False), file_name="results.csv", mime="text/csv")
+    st.write("### Your Results:")
+    st.dataframe(df)
 
+    # Allow download of results
+    csv = df.to_csv(index=False)
+    st.download_button("Download Responses", csv, file_name="results.csv", mime="text/csv")
