@@ -97,7 +97,7 @@ if st.session_state.index < len(images):
 
             st.session_state.responses.append(response)
             st.session_state.index += 1
-            st.experimental_rerun()
+            st.rerun()
 
 # End screen
 else:
