@@ -39,16 +39,17 @@ if "demographics_collected" not in st.session_state:
         experience = st.selectbox("Wood Experience", ["None", "Basic", "Average", "High", "Expert"])
         submitted = st.form_submit_button("Start Survey")
 
-        if submitted:
-            st.session_state.demographics = {
-                "Age": age,
-                "Gender": gender,
-                "Wood Experience": experience
-            }
-            st.session_state.demographics_collected = True
-            st.session_state.index = 0  # Start at first image
-            st.experimental_rerun()
-    st.stop()
+    if submitted:
+        st.session_state["demographics"] = {
+            "Age": age,
+            "Gender": gender,
+            "Wood Experience": experience
+        }
+        st.session_state["demographics_collected"] = True
+        st.session_state["index"] = 0
+        st.rerun()  # <--- Safe usage after button click
+    else:
+        st.stop()
 
 # Main survey loop
 if st.session_state.index < len(images):
