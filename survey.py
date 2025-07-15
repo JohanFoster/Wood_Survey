@@ -9,7 +9,7 @@ from PIL import Image
 st.set_page_config(page_title="Wood Texture Survey", layout="wide")
 
 # Load and shuffle images
-@st.cache
+@st.cache_data
 def load_images(image_dir):
     images = []
     valid_extensions = ('.png', '.jpg', '.jpeg')
